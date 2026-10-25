@@ -1,0 +1,9 @@
+{
+  "name": "splitgoa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Split trip expenses by typing or dictating plain-English sentences.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SplitGoa</title>
+<style>
+  :root {
+    --bg: #fff8ee; --card: #ffffff; --ink: #2b2118; --muted: #7a6a5a; --line: #eadcc8;
+    --accent: #ff6b3d; --accent-ink: #ffffff; --good: #1f9d6b; --bad: #d64545; --chip: #ffeede;
+    --shadow: 0 6px 24px rgba(120, 70, 20, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17120d; --card: #231c15; --ink: #f6ece0; --muted: #b7a58f; --line: #3a2e22;
+      --accent: #ff7d52; --accent-ink: #1a0f08; --good: #4cc795; --bad: #ff7b7b; --chip: #33261a;
+      --shadow: 0 6px 24px rgba(0, 0, 0, .35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header {
+    padding: 36px 16px 56px; color: #fff; text-align: center;
+    background: linear-gradient(160deg, #ff9a3d 0%, #ff5e62 55%, #7b3fa0 100%);
+  }
+  header h1 { margin: 0; font-size: clamp(28px, 6vw, 42px); letter-spacing: -.5px; }
+  header p { margin: 6px auto 0; max-width: 560px; opacity: .92; }
+  main { max-width: 920px; margin: -34px auto 48px; padding: 0 16px; display: grid; gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
+  h2 { margin: 0 0 10px; font-size: 17px; }
+  textarea, input[type=text] {
+    width: 100%; font: inherit; color: var(--ink); background: var(--bg);
+    border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; outline: none;
+  }
+  textarea { min-height: 96px; resize: vertical; }
+  textarea:focus, input[type=text]:focus { border-color: var(--accent); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .row.spread { justify-content: space-between; }
+  button {
+    font: inherit; font-weight: 600; cursor: pointer; border-radius: 10px; padding: 9px 16px;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--ink);
+  }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.ghost { border-color: transparent; color: var(--muted); font-weight: 500; }
+  .hint { color: var(--muted); font-size: 14px; }
+  .chip {
+    background: var(--chip); border-radius: 999px; padding: 4px 12px; font-size: 14px;
+    display: inline-flex; align-items: center; gap: 6px; border: 0; font-weight: 500; cursor: default;
+  }
+  .chip.example { cursor: pointer; }
+  .chip .x { cursor: pointer; color: var(--muted); font-weight: 700; background: none; border: 0; padding: 0; font-size: 14px; }
+  .chip .x[disabled] { cursor: not-allowed; opacity: .3; }
+  .preview { margin-top: 10px; display: grid; gap: 6px; }
+  .pv { font-size: 14px; border-radius: 10px; padding: 8px 12px; border: 1px solid var(--line); }
+  .pv.ok { border-left: 4px solid var(--good); }
+  .pv.err { border-left: 4px solid var(--bad); color: var(--bad); }
+  .grid2 { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  li.item { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+  li.item:last-child { border-bottom: 0; }
+  .emoji { font-size: 24px; width: 36px; text-align: center; }
+  .grow { flex: 1; min-width: 0; }
+  .title { font-weight: 600; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .amt { font-weight: 700; white-space: nowrap; }
+  .pos { color: var(--good); } .neg { color: var(--bad); }
+  .del { background: none; border: 0; color: var(--muted); padding: 4px 8px; cursor: pointer; font-size: 18px; }
+  .settle { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--chip); border-radius: 12px; }
+  .settle .arrow { color: var(--accent); font-weight: 800; }
+  .empty { color: var(--muted); text-align: center; padding: 14px 0; }
+  .total { font-size: 28px; font-weight: 800; letter-spacing: -.5px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🌴 SplitGoa</h1>
+  <p>Say it like you'd say it. “Rahul paid 1200 for dinner, split between Aman and Priya.” We do the maths and tell everyone who pays whom.</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Add expenses</h2>
+    <textarea id="input" placeholder="Dictate or type. One expense per line, or separate them with a full stop.&#10;e.g. Aman paid 3k for the scooter rental, split equally except Priya"></textarea>
+    <div class="row spread" style="margin-top:10px">
+      <div class="row">
+        <button class="primary" id="add">Add expenses</button>
+        <button id="mic" title="Dictate with the browser's speech recognition">🎤 Dictate</button>
+      </div>
+      <span class="hint">Tip: Ctrl+Enter to add</span>
+    </div>
+    <div id="preview" class="preview" aria-live="polite"></div>
+    <div class="row" style="margin-top:12px" id="examples"></div>
+  </section>
+
+  <section class="card">
+    <div class="row spread"><h2 style="margin:0">Group</h2><span class="hint" id="groupHint"></span></div>
+    <div class="row" id="people" style="margin:10px 0"></div>
+    <div class="row">
+      <input type="text" id="newPerson" placeholder="Add a person" style="max-width:240px">
+      <button id="addPerson">Add</button>
+    </div>
+  </section>
+
+  <div class="grid2">
+    <section class="card">
+      <div class="row spread"><h2 style="margin:0">Expenses</h2><span class="total" id="total"></span></div>
+      <ul id="expenses" style="margin-top:8px"></ul>
+    </section>
+    <section class="card">
+      <h2>Balances</h2>
+      <ul id="balances"></ul>
+      <h2 style="margin-top:18px">Settle up</h2>
+      <ul id="settlements"></ul>
+      <div class="row" style="margin-top:12px">
+        <button id="copy">Copy summary</button>
+        <button class="ghost" id="demo">Load Goa demo</button>
+        <button class="ghost" id="reset">Clear all</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="parser.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
